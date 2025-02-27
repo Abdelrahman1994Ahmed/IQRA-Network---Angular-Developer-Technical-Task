@@ -1,0 +1,53 @@
+<div class="form-container">
+    <form [formGroup]="form" (ngSubmit)="submitForm()">
+      <div *ngFor="let field of jsonSchema.fields">
+        <label>{{ field.label }}</label>
+        
+        <!-- name, Email, Password Inputs -->
+        <div *ngIf="field.type === 'text' || field.type === 'email' || field.type === 'password'">
+          <input *ngIf="field.type !== 'select'" [type]="field.type" [formControlName]="field.name" [placeholder]="field.label">
+        </div>
+  
+        <!-- checkbox -->
+        <div *ngIf="field.type === 'checkbox'">
+          <input type="checkbox" [formControlName]="field.name">
+        </div>
+  
+        <!-- List (Hobbies) -->
+        <div *ngIf="field.type === 'list'">
+          <div formArrayName="hobbies">
+            <div *ngFor="let hobby of getHobbies().controls; let i = index">
+              <div>
+                <label>Hobby {{i + 1}}</label>
+                <input [formControlName]="i" placeholder="Enter Hobby">
+                <button type="button" (click)="removeHobby(i)">Remove</button>
+              </div>
+            </div>
+            <button type="button" (click)="addHobby()">Add Hobby</button>
+          </div>
+        </div>
+  
+        <!-- Select (Gender) -->
+        <div *ngIf="field.type === 'select'">
+          <select [formControlName]="field.name">
+            <option *ngFor="let option of field.options" [value]="option">{{ option }}</option>
+          </select>
+        </div>
+  
+        <!-- Validation  -->
+        <div *ngIf="form.get(field.name)?.invalid && form.get(field.name)?.touched">
+          <small class="error" *ngIf="form.get(field.name)?.hasError('required')">This field is required.</small>
+          <small class="error" *ngIf="form.get(field.name)?.hasError('email')">Invalid email.</small>
+          <small class="error" *ngIf="form.get(field.name)?.hasError('minlength')">Minimum length not met.</small>
+        </div>
+      </div>
+  
+      <button type="submit" [disabled]="form.invalid">Submit</button>
+    </form>
+  
+    <div class="preview">
+      <h3>Live Preview:</h3>
+      <p>{{ form.value | json }}</p>
+    </div>
+  </div>
+  
