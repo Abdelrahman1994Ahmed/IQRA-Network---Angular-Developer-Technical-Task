@@ -1,17 +1,18 @@
-import { Component, OnInit , OnDestroy} from '@angular/core';
+import { Component, OnInit, Inject } from '@angular/core';
 import { FormArray, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { PLATFORM_ID } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 
 @Component({
   selector: 'app-form-builder',
   templateUrl: './form-builder.component.html',
-  styleUrl: './form-builder.component.css'
+  styleUrls: ['./form-builder.component.css']
 })
-
 export class FormBuilderComponent implements OnInit {
   form!: FormGroup;
   jsonSchema: any;
 
-  constructor(private fb: FormBuilder) {}
+  constructor(private fb: FormBuilder, @Inject(PLATFORM_ID) private platformId: Object) {}
 
   ngOnInit(): void {
     this.jsonSchema = {
@@ -19,24 +20,22 @@ export class FormBuilderComponent implements OnInit {
         { label: 'Name', type: 'text', name: 'name', required: true },
         { label: 'Email', type: 'email', name: 'email', required: true, pattern: 'email' },
         { label: 'Password', type: 'password', name: 'password', required: true, minLength: 6 },
-        { label: 'Hobbies', type: 'list', name: 'hobbies', required: false, itemType: 'text' },
+        { label: 'Gender', type: 'select', name: 'gender', required: true, options: ['Male', 'Female'] }, // Gender field
         { label: 'Agree to Terms', type: 'checkbox', name: 'terms', required: true },
-        { label: 'Gender', type: 'select', name: 'gender', required: true, options: ['Male', 'Female'] }
+        { label: 'Hobbies', type: 'list', name: 'hobbies', required: false, itemType: 'text' }
       ]
     };
 
     this.form = this.createForm(this.jsonSchema.fields);
 
-    this.loadFormState();
+    if (isPlatformBrowser(this.platformId)) {
+      const savedData = localStorage.getItem('formData');
+      if (savedData) {
+        this.form.setValue(JSON.parse(savedData));
+      }
+    }
   }
 
-  // ngOnDestroy(): void {
-  //   if (typeof window !== 'undefined' && window.localStorage) {
-  //     localStorage.removeItem('formstate');
-  //   }
-  // }
-
-  
   createForm(fields: any[]): FormGroup {
     const group: any = {};
 
@@ -51,7 +50,6 @@ export class FormBuilderComponent implements OnInit {
     return this.fb.group(group);
   }
 
-  
   getValidators(field: any) {
     const validators: any[] = [];
 
@@ -61,46 +59,28 @@ export class FormBuilderComponent implements OnInit {
     return validators;
   }
 
-  
   getHobbies(): FormArray {
     return this.form.get('hobbies') as FormArray;
   }
 
-  
   addHobby(): void {
     const hobbies = this.getHobbies();
     hobbies.push(this.fb.control(''));
   }
 
-  
   removeHobby(index: number): void {
     const hobbies = this.getHobbies();
     hobbies.removeAt(index);
   }
 
-  saveFormState(): void {
-    const formState = this.form.value;
-    localStorage.setItem('formState', JSON.stringify(formState));
-  }
-
- 
-  loadFormState(): void {
-    const savedState = localStorage.getItem('formState');
-    if (savedState) {
-      const formState = JSON.parse(savedState);
-      this.form.setValue(formState);
-    }
-  }
-
-  // Submit form
   submitForm(): void {
     if (this.form.valid) {
       alert('Form has been submitted');
       console.log(this.form.value);
-      localStorage.removeItem('formState');
+  
+      localStorage.setItem('formData', JSON.stringify(this.form.value));
     } else {
       alert('Form is invalid');
     }
   }
-    
 }
